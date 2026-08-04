@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#17644b" />
+    <title>Nómina al Día</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Nómina al Día" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">Estimador de nómina</p>
+          <h1 id="app-title">Nómina al Día</h1>
+          <p class="hero-copy">
+            Carga partes, marca descansos trabajados, revisa dietas y guarda una copia.
+            Los PDF no se conservan: solo quedan los datos extraídos.
+          </p>
+        </div>
+        <div class="brand-stamp">Creado por Iván Simeoni</div>
+      </section>
+
+      <section class="period-card" aria-labelledby="period-title">
+        <div>
+          <p class="eyebrow">Periodo activo</p>
+          <h2 id="period-title"><span id="periodLabel">Julio 2026</span></h2>
+          <p id="periodRange" class="muted">24/06/2026 - 23/07/2026</p>
+        </div>
+        <div class="period-actions">
+          <label>Mes de nómina <input id="periodMonth" type="month" /></label>
+          <button id="newPeriodBtn" type="button">Nuevo periodo</button>
+        </div>
+      </section>
+
+      <section class="summary-grid" aria-label="Resumen del periodo">
+        <article>
+          <span>Días trabajados</span>
+          <strong id="workDays">0</strong>
+        </article>
+        <article>
+          <span>Horas computables</span>
+          <strong id="totalHours">0,00</strong>
+        </article>
+        <article>
+          <span>Nocturnidad</span>
+          <strong id="nightHours">0,00</strong>
+        </article>
+        <article>
+          <span>Disponibilidad</span>
+          <strong id="dpHours">0,00</strong>
+        </article>
+        <article>
+          <span>Estimado bruto</span>
+          <strong id="grossTotal">0,00 €</strong>
+        </article>
+      </section>
+
+      <section class="tool-card" aria-labelledby="load-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Carga diaria</p>
+            <h2 id="load-title">Partes de trabajo</h2>
+          </div>
+          <span id="loadStatus" class="status-pill">Listo</span>
+        </div>
+        <div class="drop-zone">
+          <input id="pdfInput" type="file" accept="application/pdf" multiple />
+          <div>
+            <strong>Selecciona uno o varios PDF</strong>
+            <span>Si ya existe un parte para esa fecha, la app te pregunta si quieres reemplazarlo.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="tool-card" aria-labelledby="backup-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Copia local</p>
+            <h2 id="backup-title">Copia de seguridad</h2>
+          </div>
+          <span id="backupStatus" class="status-pill">Sin copia descargada</span>
+        </div>
+        <div class="button-row">
+          <button id="saveJsonBtn" type="button">Guardar copia JSON</button>
+          <label class="file-button">
+            Restaurar JSON
+            <input id="jsonInput" type="file" accept="application/json" />
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-band" aria-labelledby="settings-title">
+        <div>
+          <p class="eyebrow">Reglas</p>
+          <h2 id="settings-title">Convenio Huesca y estimación</h2>
+          <p class="convention-note">
+            Residencia habitual: Huesca. Dieta comida si la jornada cruza 12:00-14:00.
+            Dieta cena si cruza 20:00-22:00. Todo se puede corregir a mano.
+          </p>
+        </div>
+        <div class="settings-grid">
+          <label>Salario base día <input id="baseDayRate" type="number" min="0" step="0.01" /></label>
+          <label>Plus asistencia <input id="attendanceRate" type="number" min="0" step="0.01" /></label>
+          <label>Nocturna €/h <input id="nightRate" type="number" min="0" step="0.01" /></label>
+          <label>Disponibilidad €/h <input id="dpRate" type="number" min="0" step="0.01" /></label>
+          <label>Presencia €/h <input id="presenceRate" type="number" min="0" step="0.01" /></label>
+          <label>Festivo €/h <input id="holidayRate" type="number" min="0" step="0.01" /></label>
+          <label>Dieta regular <input id="regularDietRate" type="number" min="0" step="0.01" /></label>
+          <label>Dieta disc. nacional <input id="nationalDietRate" type="number" min="0" step="0.01" /></label>
+          <label>Extra prorrateada 1 <input id="monthlyExtraJuly" type="number" min="0" step="0.01" /></label>
+          <label>Extra prorrateada 2 <input id="monthlyExtraDecember" type="number" min="0" step="0.01" /></label>
+          <label>IRPF % estimado <input id="irpfPct" type="number" min="0" step="0.01" /></label>
+          <label>Seg. Social % estimado <input id="socialPct" type="number" min="0" step="0.01" /></label>
+          <label>Horas normales del periodo <input id="periodBaseHours" type="number" min="0" step="0.01" /></label>
+          <label>Horas computables reales <input id="periodPaidHours" type="number" min="0" step="0.01" /></label>
+        </div>
+      </section>
+
+      <section class="comparison-band" aria-labelledby="compare-title">
+        <div>
+          <p class="eyebrow">Comparar nómina</p>
+          <h2 id="compare-title">Datos del recibo real</h2>
+        </div>
+        <div class="mini-loader">
+          <input id="payrollPdfInput" type="file" accept="application/pdf" />
+          <span id="payrollLoadStatus" class="muted">Carga el PDF de la nómina para rellenar estos datos automáticamente.</span>
+        </div>
+        <div class="comparison-grid">
+          <label>Presencia recibo <input id="payrollPresenceHours" type="number" min="0" step="0.01" /></label>
+          <label>Nocturnas recibo <input id="payrollNightHours" type="number" min="0" step="0.01" /></label>
+          <label>Disponibilidad recibo <input id="payrollDpHours" type="number" min="0" step="0.01" /></label>
+          <label>Dietas recibo <input id="payrollDiets" type="number" min="0" step="0.01" /></label>
+          <label>Total devengado <input id="payrollGross" type="number" min="0" step="0.01" /></label>
+          <label>Total deducciones <input id="payrollDeductions" type="number" min="0" step="0.01" /></label>
+          <label>Líquido nómina <input id="payrollNet" type="number" min="0" step="0.01" /></label>
+        </div>
+        <div id="diffBox" class="diff-box" aria-live="polite"></div>
+      </section>
+
+      <section class="table-band" aria-labelledby="table-title">
+        <div class="table-head">
+          <div>
+            <p class="eyebrow">Revisión diaria</p>
+            <h2 id="table-title">Partes cargados</h2>
+          </div>
+          <div class="legend">
+            <span><i class="dot ok"></i> OK</span>
+            <span><i class="dot warn"></i> Revisar</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Día</th>
+                <th>Parte</th>
+                <th>Tramos</th>
+                <th>Total</th>
+                <th>Noct.</th>
+                <th>Tipo día</th>
+                <th>Servicio</th>
+                <th>Dietas</th>
+                <th>DP h</th>
+                <th>Presencia</th>
+                <th>Importe</th>
+                <th>Estado</th>
+                <th>Notas</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
