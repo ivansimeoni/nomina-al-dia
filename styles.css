@@ -228,6 +228,18 @@ button:hover {
   color: var(--muted);
 }
 
+.mini-loader {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.mini-loader input {
+  margin: 0;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(150px, 1fr));
@@ -467,6 +479,10 @@ tr.rest-day {
   }
 
   .drop-zone {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-loader {
     grid-template-columns: 1fr;
   }
 }

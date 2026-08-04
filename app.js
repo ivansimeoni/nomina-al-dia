@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS = {
   monthlyExtraDecember: 106.91,
   irpfPct: 13,
   socialPct: 6.5,
-  periodBaseHours: 199.5,
+  periodBaseHours: "",
   periodPaidHours: "",
   payrollPresenceHours: "",
   payrollNightHours: "",
@@ -226,7 +226,9 @@ function calcTotals() {
   const presence = resolvePresence(totals.manualPresence, totals.totalHours);
   totals.presenceHours = presence;
   totals.gross += presence * Number(state.settings.presenceRate);
-  totals.gross += Number(state.settings.monthlyExtraJuly) + Number(state.settings.monthlyExtraDecember);
+  if (totals.workDays > 0) {
+    totals.gross += Number(state.settings.monthlyExtraJuly) + Number(state.settings.monthlyExtraDecember);
+  }
   totals.deductions = totals.gross * ((Number(state.settings.irpfPct) + Number(state.settings.socialPct)) / 100);
   totals.net = totals.gross - totals.deductions;
   return totals;
@@ -236,7 +238,7 @@ function resolvePresence(manualPresence, extractedHours) {
   if (manualPresence > 0) return manualPresence;
   const base = Number(state.settings.periodBaseHours);
   const paid = state.settings.periodPaidHours === "" ? extractedHours : Number(state.settings.periodPaidHours);
-  if (!Number.isFinite(base) || !Number.isFinite(paid)) return 0;
+  if (!Number.isFinite(base) || !Number.isFinite(paid) || base <= 0) return 0;
   return Math.max(0, paid - base);
 }
 
@@ -429,6 +431,62 @@ function parseWorkPdf(fileName, text) {
   });
 }
 
+function parsePayrollPdf(text) {
+  const parsed = {
+    payrollPresenceHours: findPayrollNumber(text, /\*?HORAS DE PRESENCIA\s+(\d+,\d{2})/i),
+    payrollNightHours: findPayrollNumber(text, /\*?PLUS NOCTURNIDAD\s+(\d+,\d{2})/i),
+    payrollDpHours: findPayrollNumber(text, /\*?PLUS DISPONIBILIDAD\s+(\d+,\d{2})/i),
+    payrollGross: null,
+    payrollDeductions: null,
+    payrollNet: null,
+  };
+  const diets = [
+    ...text.matchAll(/-DIETA[^\n\r]*?\s+(\d+,\d{2})\s+(\d+,\d{2})\s+(\d+,\d{2})/gi),
+  ].reduce((sum, match) => sum + parseSpanishNumber(match[2]), 0);
+  parsed.payrollDiets = diets || null;
+
+  const totalsMatch = text.match(/([\d.]+,\d{2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})\s+HUESCA/i);
+  if (totalsMatch) {
+    parsed.payrollNet = parseSpanishNumber(totalsMatch[1]);
+    parsed.payrollGross = parseSpanishNumber(totalsMatch[2]);
+    parsed.payrollDeductions = parseSpanishNumber(totalsMatch[3]);
+  }
+  return parsed;
+}
+
+function findPayrollNumber(text, regex) {
+  const match = text.match(regex);
+  return match ? parseSpanishNumber(match[1]) : null;
+}
+
+function parseSpanishNumber(value) {
+  if (!value) return 0;
+  return Number(String(value).replaceAll(".", "").replace(",", "."));
+}
+
+async function handlePayrollPdf(file) {
+  const status = document.getElementById("payrollLoadStatus");
+  status.textContent = "Leyendo nómina...";
+  try {
+    const text = await extractPdfText(file);
+    const payroll = parsePayrollPdf(text);
+    let loaded = 0;
+    Object.entries(payroll).forEach(([key, value]) => {
+      if (value === null || Number.isNaN(value)) return;
+      state.settings[key] = Number(value.toFixed(2));
+      loaded += 1;
+    });
+    saveState();
+    render();
+    status.textContent = loaded
+      ? `Nómina cargada: ${loaded} campos rellenados.`
+      : "No pude detectar conceptos automáticamente. Puedes cargarlos a mano.";
+  } catch (error) {
+    status.textContent = "No pude leer la nómina.";
+    alert(`No pude leer la nómina: ${error.message}`);
+  }
+}
+
 function matchTime(text, regex) {
   const match = text.match(regex);
   return match ? normalizeTime(match[1]) : "";
@@ -520,6 +578,11 @@ document.addEventListener("change", (event) => {
   }
   if (target.id === "jsonInput") {
     if (target.files[0]) restoreJson(target.files[0]);
+    target.value = "";
+    return;
+  }
+  if (target.id === "payrollPdfInput") {
+    if (target.files[0]) handlePayrollPdf(target.files[0]);
     target.value = "";
     return;
   }
