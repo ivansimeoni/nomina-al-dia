@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#17644b" />
+    <title>Nómina al Día</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Nómina al Día" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest?v=10" />
+    <link rel="stylesheet" href="./styles.css?v=10" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">Estimador de nómina</p>
+          <h1 id="app-title">Nómina al Día</h1>
+          <p class="hero-copy">
+            Carga partes, marca descansos trabajados, revisa dietas y guarda una copia.
+            Los PDF no se conservan: solo quedan los datos extraídos.
+          </p>
+        </div>
+        <div class="brand-stamp">Creado por Iván Simeoni <span id="appVersion">v10</span></div>
+      </section>
+
+      <section class="period-card" aria-labelledby="period-title">
+        <div>
+          <p class="eyebrow">Periodo activo</p>
+          <h2 id="period-title"><span id="periodLabel">Julio 2026</span></h2>
+          <p id="periodRange" class="muted">24/06/2026 - 23/07/2026</p>
+        </div>
+        <div class="period-actions">
+          <label>Ver mes <select id="periodSelect"></select></label>
+          <label>Crear/cargar mes <input id="periodMonth" type="month" /></label>
+          <button id="newPeriodBtn" type="button">Abrir mes</button>
+        </div>
+      </section>
+
+      <nav class="tab-bar" aria-label="Vistas de la aplicación">
+        <button class="tab-button active" type="button" data-tab="actual">Actual</button>
+        <button class="tab-button" type="button" data-tab="partes">Partes</button>
+        <button class="tab-button" type="button" data-tab="nomina">Nómina real</button>
+        <button class="tab-button" type="button" data-tab="historial">Historial</button>
+      </nav>
+
+      <section class="summary-grid" data-tab-panel="actual" aria-label="Resumen del periodo">
+        <article>
+          <span>Días trabajados</span>
+          <strong id="workDays">0</strong>
+        </article>
+        <article>
+          <span>Descansos trabajados</span>
+          <strong id="extraDays">0</strong>
+        </article>
+        <article>
+          <span>Festivos trabajados</span>
+          <strong id="holidayDays">0</strong>
+        </article>
+        <article>
+          <span>Horas trabajadas</span>
+          <strong id="workHours">0,00</strong>
+        </article>
+        <article>
+          <span>Libre disposición excluida</span>
+          <strong id="freeHours">0,00</strong>
+        </article>
+        <article>
+          <span>Horas reclamadas</span>
+          <strong id="claimedHours">0,00</strong>
+        </article>
+        <article>
+          <span>Horas computables</span>
+          <strong id="totalHours">0,00</strong>
+        </article>
+        <article>
+          <span>Nocturnidad</span>
+          <strong id="nightHours">0,00</strong>
+        </article>
+        <article>
+          <span>Disponibilidad</span>
+          <strong id="dpHours">0,00</strong>
+        </article>
+        <article>
+          <span>Presencia manual</span>
+          <strong id="presenceHours">0,00</strong>
+        </article>
+        <article>
+          <span>Comidas / cenas</span>
+          <strong id="regularDiets">0 / 0</strong>
+        </article>
+        <article>
+          <span>Discrecional nacional</span>
+          <strong id="nationalDiets">0 / 0</strong>
+        </article>
+        <article>
+          <span>Estimado bruto</span>
+          <strong id="grossTotal">0,00 €</strong>
+        </article>
+      </section>
+
+      <section class="tool-card" data-tab-panel="actual" aria-labelledby="load-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Carga diaria</p>
+            <h2 id="load-title">Partes de trabajo</h2>
+          </div>
+          <span id="loadStatus" class="status-pill">Listo</span>
+        </div>
+        <div class="drop-zone">
+          <input id="pdfInput" type="file" accept="application/pdf" multiple />
+          <div>
+            <strong>Selecciona uno o varios PDF</strong>
+            <span>Si ya existe un parte para esa fecha, la app te pregunta si quieres reemplazarlo.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="tool-card" data-tab-panel="actual" aria-labelledby="backup-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Copia local</p>
+            <h2 id="backup-title">Copia de seguridad</h2>
+          </div>
+          <span id="backupStatus" class="status-pill">Sin copia descargada</span>
+        </div>
+        <div class="button-row">
+          <button id="saveJsonBtn" type="button">Guardar copia JSON</button>
+          <label class="file-button">
+            Restaurar JSON
+            <input id="jsonInput" type="file" accept="application/json" />
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-band" data-tab-panel="actual" aria-labelledby="settings-title">
+        <div>
+          <p class="eyebrow">Reglas</p>
+          <h2 id="settings-title">Convenio Huesca y estimación</h2>
+          <p class="convention-note">
+            Residencia habitual: Huesca. Las dietas no se calculan automaticamente:
+            se marcan manualmente por dia. La libre disposicion se excluye del computo.
+          </p>
+        </div>
+        <div class="settings-grid">
+          <label>Salario base día <input id="baseDayRate" type="number" min="0" step="0.01" /></label>
+          <label>Plus asistencia <input id="attendanceRate" type="number" min="0" step="0.01" /></label>
+          <label>Nocturna €/h <input id="nightRate" type="number" min="0" step="0.01" /></label>
+          <label>Disponibilidad €/h <input id="dpRate" type="number" min="0" step="0.01" /></label>
+          <label>Presencia €/h <input id="presenceRate" type="number" min="0" step="0.01" /></label>
+          <label>Festivo €/h <input id="holidayRate" type="number" min="0" step="0.01" /></label>
+          <label>Dieta regular <input id="regularDietRate" type="number" min="0" step="0.01" /></label>
+          <label>Dieta disc. nacional <input id="nationalDietRate" type="number" min="0" step="0.01" /></label>
+          <label>Extra prorrateada 1 <input id="monthlyExtraJuly" type="number" min="0" step="0.01" /></label>
+          <label>Extra prorrateada 2 <input id="monthlyExtraDecember" type="number" min="0" step="0.01" /></label>
+          <label>IRPF % estimado <input id="irpfPct" type="number" min="0" step="0.01" /></label>
+          <label>Seg. Social % estimado <input id="socialPct" type="number" min="0" step="0.01" /></label>
+          <label>Horas normales del periodo <input id="periodBaseHours" type="number" min="0" step="0.01" /></label>
+          <label>Horas computables reales <input id="periodPaidHours" type="number" min="0" step="0.01" /></label>
+        </div>
+      </section>
+
+      <section class="comparison-band" data-tab-panel="nomina" aria-labelledby="compare-title">
+        <div>
+          <p class="eyebrow">Comparar nómina</p>
+          <h2 id="compare-title">Datos del recibo real</h2>
+        </div>
+        <div class="mini-loader">
+          <input id="payrollPdfInput" type="file" accept="application/pdf" />
+          <span id="payrollLoadStatus" class="muted">Carga el PDF de la nómina para rellenar estos datos automáticamente.</span>
+        </div>
+        <div class="comparison-grid">
+          <label>Comidas recibo <input id="payrollRegularMeals" type="number" min="0" step="1" /></label>
+          <label>Cenas recibo <input id="payrollRegularDinners" type="number" min="0" step="1" /></label>
+          <label>Comidas disc. recibo <input id="payrollNationalMeals" type="number" min="0" step="1" /></label>
+          <label>Cenas disc. recibo <input id="payrollNationalDinners" type="number" min="0" step="1" /></label>
+          <label>Descansos recibo <input id="payrollExtraDays" type="number" min="0" step="1" /></label>
+          <label>Festivos recibo <input id="payrollHolidayDays" type="number" min="0" step="1" /></label>
+          <label>Horas reclamadas recibo <input id="payrollClaimedHours" type="number" min="0" step="0.01" /></label>
+          <label>Presencia recibo <input id="payrollPresenceHours" type="number" min="0" step="0.01" /></label>
+          <label>Nocturnas recibo <input id="payrollNightHours" type="number" min="0" step="0.01" /></label>
+          <label>Disponibilidad recibo <input id="payrollDpHours" type="number" min="0" step="0.01" /></label>
+          <label>Dietas recibo <input id="payrollDiets" type="number" min="0" step="0.01" /></label>
+          <label>Total devengado <input id="payrollGross" type="number" min="0" step="0.01" /></label>
+          <label>Total deducciones <input id="payrollDeductions" type="number" min="0" step="0.01" /></label>
+          <label>Líquido nómina <input id="payrollNet" type="number" min="0" step="0.01" /></label>
+        </div>
+        <div id="diffBox" class="diff-box" aria-live="polite"></div>
+      </section>
+
+      <section class="table-band" data-tab-panel="historial" aria-labelledby="history-title">
+        <div class="table-head">
+          <div>
+            <p class="eyebrow">Historial</p>
+            <h2 id="history-title">Mes a mes</h2>
+          </div>
+          <div class="legend">
+            <span><i class="dot ok"></i> Estimado</span>
+            <span><i class="dot real"></i> Real</span>
+          </div>
+        </div>
+        <div id="historyChart" class="history-chart" aria-label="Grafico de neto estimado y real por mes"></div>
+        <div class="table-wrap history-wrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>Periodo</th>
+                <th>Días</th>
+                <th>Extra</th>
+                <th>Festivos</th>
+                <th>Horas</th>
+                <th>Libre</th>
+                <th>Reclamo</th>
+                <th>Noct.</th>
+                <th>DP</th>
+                <th>Com/Cen</th>
+                <th>Bruto estimado</th>
+                <th>Bruto real</th>
+                <th>Neto estimado</th>
+                <th>Neto real</th>
+              </tr>
+            </thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-band" data-tab-panel="partes" aria-labelledby="table-title">
+        <div class="table-head">
+          <div>
+            <p class="eyebrow">Revisión diaria</p>
+            <h2 id="table-title">Partes cargados</h2>
+          </div>
+          <div class="legend">
+            <span><i class="dot ok"></i> OK</span>
+            <span><i class="dot warn"></i> Revisar</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Día</th>
+                <th>Parte</th>
+                <th>Resumen</th>
+                <th>Trabajo</th>
+                <th>Libre disp.</th>
+                <th>Reclamo</th>
+                <th>Computable</th>
+                <th>Noct.</th>
+                <th>Tipo día</th>
+                <th>Servicio</th>
+                <th>Dietas</th>
+                <th>DP h</th>
+                <th>Presencia</th>
+                <th>Importe</th>
+                <th>Estado</th>
+                <th>Notas</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./app.js?v=10"></script>
+  </body>
+</html>
